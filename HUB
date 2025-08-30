@@ -1,0 +1,237 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "DevoxHUB",
+   Icon = 0,
+   LoadingTitle = "DevoxHUB",
+   LoadingSubtitle = "by Cylo",
+   ShowText = "Rayfield",
+   Theme = "Dark Blue",
+   ToggleUIKeybind = "K",
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false,
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil,
+      FileName = "Big Hub"
+   },
+   Discord = {
+      Enabled = true,
+      Invite = "cEgVBaHcrz",
+      RememberJoins = true
+   },
+   KeySystem = true,
+   KeySettings = {
+      Title = "Devox Key",
+      Subtitle = "Key System",
+      Note = "KEY IS IN DISCORD https://discord.gg/cEgVBaHcrz",
+      FileName = "DevoxKey",
+      SaveKey = true,
+      GrabKeyFromSite = false,
+      Key = {"DEVOXHUB123"}
+   }
+})
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local lastSpeed = 16
+
+-- === Player Tab ===
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+
+-- WalkSpeed Slider
+PlayerTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {16, 150},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = lastSpeed,
+    Flag = "Slider1",
+    Callback = function(Value)
+        lastSpeed = Value
+        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = Value
+        end
+    end,
+})
+
+-- NoClip Toggle
+local noClipEnabled = false
+PlayerTab:CreateToggle({
+    Name = "NoClip",
+    CurrentValue = false,
+    Flag = "NoClipToggle",
+    Callback = function(value)
+        noClipEnabled = value
+    end,
+})
+
+RunService.Stepped:Connect(function()
+    if noClipEnabled then
+        local character = player.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+-- FOV Slider
+PlayerTab:CreateSlider({
+    Name = "FOV",
+    Range = {70, 120},
+    Increment = 1,
+    Suffix = "FOV",
+    CurrentValue = camera.FieldOfView,
+    Flag = "FOVSlider",
+    Callback = function(value)
+        camera.FieldOfView = value
+    end,
+})
+
+-- Infinite Jump
+local infJumpEnabled = false
+PlayerTab:CreateToggle({
+    Name = "Inf Jump",
+    CurrentValue = false,
+    Flag = "InfJumpToggle",
+    Callback = function(value)
+        infJumpEnabled = value
+    end
+})
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Reapply WalkSpeed on respawn
+player.CharacterAdded:Connect(function(character)
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = lastSpeed
+    end
+end)
+
+-- === Troll Tab ===
+local TrollTab = Window:CreateTab("Troll", 4483362458)
+
+-- Touch Fling toggle
+local hiddenFling = false
+TrollTab:CreateToggle({
+    Name = "Touch Fling",
+    CurrentValue = false,
+    Flag = "FlingToggle",
+    Callback = function(value)
+        hiddenFling = value
+    end,
+})
+
+spawn(function()
+    local hrp, character, vel
+    local movel = 0.1
+    while true do
+        RunService.Heartbeat:Wait()
+        if hiddenFling then
+            character = player.Character
+            hrp = character and character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                vel = hrp.Velocity
+                hrp.Velocity = vel * 10000 + Vector3.new(0,10000,0)
+                RunService.RenderStepped:Wait()
+                if hrp then hrp.Velocity = vel end
+                RunService.Stepped:Wait()
+                if hrp then
+                    hrp.Velocity = vel + Vector3.new(0, movel, 0)
+                    movel = movel * -1
+                end
+            end
+        end
+    end
+end)
+
+-- Expand All Player Hitboxes
+local expandAllPlayers = false
+local originalSizes = {}
+
+TrollTab:CreateToggle({
+    Name = "Expand All Player Hitboxes",
+    CurrentValue = false,
+    Flag = "ExpandAllPlayers",
+    Callback = function(value)
+        expandAllPlayers = value
+
+        if not value then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp and originalSizes[plr] then
+                        hrp.Size = originalSizes[plr]
+                        hrp.CanCollide = true
+                        hrp.Transparency = 0
+                        hrp.Color = Color3.fromRGB(255, 255, 255)
+                        originalSizes[plr] = nil
+                    end
+                end
+            end
+        end
+    end,
+})
+
+spawn(function()
+    while true do
+        wait(0.1)
+        if expandAllPlayers then
+            for _, plr in ipairs(Players:GetPlayers()) do
+                pcall(function()
+                    if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            if not originalSizes[plr] then
+                                originalSizes[plr] = hrp.Size
+                            end
+                            hrp.Size = Vector3.new(10, 10, 10)
+                            hrp.CanCollide = false
+                            hrp.Transparency = 0.5
+                            hrp.Color = Color3.fromRGB(255, 0, 0)
+                        end
+                    end
+                end)
+            end
+        end
+    end
+end)
+
+-- Daytime Changer
+TrollTab:CreateSlider({
+    Name = "Time of Day",
+    Range = {0, 24},
+    Increment = 0.1,
+    Suffix = "Hour",
+    CurrentValue = game.Lighting.ClockTime,
+    Flag = "TimeSlider",
+    Callback = function(value)
+        game.Lighting.ClockTime = value
+    end
+})
+
+-- === AIMBOT PANEL ===
+local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
+
+AimbotTab:CreateButton({
+    Name = "Aimbot",
+    Callback = function()
+        if getgenv().Aimbot then return end
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V2/main/Resources/Scripts/Raw%20Main.lua"))()
+    end
+})
